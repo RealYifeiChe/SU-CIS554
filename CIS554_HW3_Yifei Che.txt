@@ -1,0 +1,433 @@
+//HW3
+//Due: 11:59PM, March 20 (Saturday)
+//Yifei Che
+//SUID: 636109055 NETID:yche03
+
+#include <iostream>
+#include <list>
+#include <map>
+#include <string>
+#include <tuple>
+#include <vector>
+#include <iomanip>
+#include <algorithm>    // std::sort
+
+using namespace std;
+
+class course {
+public:
+	string name;
+	int section;
+	int credits;
+	string grade;
+	course() {}
+	course(string n, int s, int c, string g) { name = n; section = s; credits = c; grade = g; }
+
+	bool operator < (const course& c) const { return name < c.name; } //compare the current course name with the passed cource name
+	bool operator== (const course& c) const { //== operator overloading
+		return (name == c.name) && (section == c.section) && (credits == c.credits) && (grade == c.grade);
+	}
+	//ostream& operator<<(istream& str, const course& c){}
+
+	float getGPAScore(){
+		if (grade == "A")  { return (4.0 * credits); }
+		if (grade == "A-") { return (3.7 * credits); }
+		if (grade == "B+") { return (3.3 * credits); }
+		if (grade == "B")  { return (3.0 * credits); }
+		if (grade == "B-") { return (2.7 * credits); }
+		if (grade == "C+") { return (2.3 * credits); }
+		if (grade == "C")  { return (2.0 * credits); }
+		if (grade == "C-") { return (1.7 * credits); }
+		if (grade == "D+") { return (1.3 * credits); }
+		if (grade == "D")  { return (1.0 * credits); }
+		if (grade == "D-") { return (0.7 * credits); }
+		if (grade == "F")  { return (0.0 * credits); }
+	}
+	
+
+};
+//Implement the following functions.
+//When adding a student, if the student is already in DB, then ignore the operation.
+//When adding a course, if the course is already in DB, then ignore the operation.
+//When dropping a course, if the course does not exist, then ignore the operation.
+//When removing a student, if the student does not exist, then ignore the operation.
+//All courses in a semester need to be sorted.
+//When dropping or adding a course, overall GPA, semester GPA, overall credits and semester credits all need to be updated.
+
+//Semeser numbers:  Spring 2019: 20191; Fall 2019: 20192, etc. 
+
+void add_student(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id);
+void remove_student(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id);
+void add_course(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id, course c); //20171 Spring semester of 2017; 20172: Fall semester of 2017
+																//All courses in the list should be sorted according to name (increasing order)
+void drop_course(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id, course c);
+void print_student_semester_courses(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id);
+void print_student_all_courses(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id);
+ostream& operator<< (ostream& str, const list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB);
+
+
+//Implement additional functions such that you can do
+//cout << DB << endl;
+
+//You might need to implement some overloaded operators in the course class.
+
+int main() {
+
+	list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>  DB;
+	add_student(DB, 11111);
+	course C1("CIS554", 1, 3, "A-"), C2("CSE674", 1, 3, "B+"), C3("MAT296", 8, 4, "A"), C4("WRT205", 5, 3, "A");
+
+	add_course(DB, 20171, 11111, C1);
+	add_course(DB, 20171, 11111, C4);
+	add_course(DB, 20171, 11111, C3);
+	add_course(DB, 20171, 11111, C2);
+	print_student_semester_courses(DB, 20171, 11111);
+
+	
+	drop_course(DB, 20171, 11111, C1);
+	print_student_semester_courses(DB, 20171, 11111); //sorted according to course name
+
+	course C5("CIS351", 2, 3, "A-"), C6("PSY205", 5, 3, "B+"), C7("MAT331", 2, 3, "A"), C8("ECN203", 4, 3, "A");
+	add_course(DB, 20172, 11111, C5);
+	add_course(DB, 20172, 11111, C6);
+	add_course(DB, 20172, 11111, C7);
+	add_course(DB, 20172, 11111, C8);
+	add_course(DB, 20172, 11111, C3); 
+	print_student_all_courses(DB, 11111);//ID GPA
+
+	
+	add_student(DB, 11112);
+	add_course(DB, 20171, 11112, C2);
+	add_course(DB, 20171, 11112, C5);
+	add_course(DB, 20171, 11112, C7);
+	add_course(DB, 20171, 11112, C4);
+	print_student_semester_courses(DB, 20171, 11112);
+
+	
+	add_course(DB, 20172, 11112, C8);
+	add_course(DB, 20172, 11112, C3);
+	add_course(DB, 20172, 11112, C5);
+	add_course(DB, 20172, 11112, C1);
+	print_student_semester_courses(DB, 20172, 11112);
+
+	print_student_all_courses(DB, 11112);
+	
+
+	cout << DB << endl;
+	remove_student(DB, 11111);
+	cout << DB << endl;
+	getchar();
+	getchar();
+	return 0;
+}
+
+void add_student(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id) {
+	//Your code
+	auto it1{ DB.begin() }, it2{DB.begin()};
+	bool found{false};
+	while (it1!=DB.end()) { //loop
+		if ((*it1)->first == id) { //check if the student exists already in DB
+			found = true;
+			it2 = it1; //let it2 points to the select student
+		}
+		if (found) return; //student already exist, return and do nothing.
+		++it1;
+	} 
+	//if not found, create a new pair for the new student registered. 
+	auto p = new pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >
+	{ id, {0, 0.00, new map<int, tuple<int, float, vector<course* >*> >   } };//all the info a student needs. only ID is provided, everything else initialized to default value.
+
+	DB.push_back(p); // add the student (pair) to the DB.
+}
+void remove_student(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id) {
+	//Your code
+	auto it1{ DB.begin() }, it2{ DB.begin() };
+	bool found{ false };
+	while (it1 != DB.end()) { //loop
+		if ((*it1)->first == id) { //check if the student exists already in DB
+			found = true;
+			it2 = it1; //let it2 points to the select student
+			DB.erase(it2); //If student exists, erase it. 
+			return;
+		}
+		//if (found) { DB.erase(it2); }; 
+		++it1;
+	}
+	return;
+}
+
+bool compareFunction(course* a, course* b) { return a->name < b->name; }
+
+void add_course(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id, course c) {
+
+	//Your code
+	auto it1{ DB.begin() };
+	bool found{ false };
+	while (it1 != DB.end()) { //loop the list
+		if ((*it1)->first == id) { //check if the student exists already in DB
+			//create a vector storing all the courses
+			vector <string> v;
+			auto R10 = *(get<2>((*it1)->second));//R10 refers the map.
+			for (auto it10 = R10.begin(); it10 != R10.end(); it10++) {//loop through all semester and add all courses to the vector v.
+				auto R11 = (*(get<2>(it10->second))); //R11 refers to course vector.
+				for (auto it11 = R11.begin(); it11 != R11.end();it11++) {
+					v.push_back((*it11)->name);
+				}
+			}
+
+			//overall info for this student
+			float overall_gpa = 0.00;
+			int overall_totalCredit = 0;
+			float overall_totalScore =0.00;
+
+			auto& R1 = (*(get<2>((*it1)->second))); //R1 is refered to the current student's map.
+			auto it2{ R1.find(semester) }; //it2 has the address value returned by R1.find(). R1.find() returns R1.end() if not found.
+
+			if (it2 != R1.end()) { //that means the sememster exist.
+				auto& R2 = (*(get<2>(R1[semester]))); //R2 is refered to the vector containing all the course info.
+				//auto it3 = find(R2.begin(), R2.end(), &c); //find will return the address of the first matched course element within the specified range.
+														  //Will return end() if no match found.
+				auto it3 = R2.begin();
+				while (it3 != R2.end()) {//loop through the vector
+					if ((*(*it3)) == c) { //check if course matched
+						found = true;
+						break;
+					}
+					++it3;
+				}
+				if (found) {// course exists.
+					return; //student already exist, return and do nothing.
+				}
+				else {//If the course doesn't exist
+					if((std::find(v.begin(), v.end(), c.name) != v.end())){}//If course exists in v, do nothing.
+					else { //create a new course and add it to the vector.
+						auto cour = new course(c.name, c.section, c.credits, c.grade); //create a course has identical info like c
+						R2.push_back(cour);
+					}
+				}
+				//update semester gpa + credits.
+				float sem_gpa = 0.00; //(get<1>(R1[semester]));
+				float sem_totalScore = 0.00;
+				int sem_totalCredit = 0;
+				int sem_cre = (get<0>(R1[semester])) + c.credits; //sem_cre is the updated credit value of the semester.
+
+				for (auto it4 = R2.begin(); it4 != R2.end(); it4++) {//loop through R2's all courses (vector)
+					sem_totalCredit += (*it4)->credits; //calcualte semester total credit
+					sem_totalScore += (*it4)->getGPAScore(); //calculate semester total gpa score.
+				}
+				sem_gpa = sem_totalScore / sem_totalCredit; 
+
+				get<0>(R1[semester]) = sem_totalCredit;
+				get<1>(R1[semester]) = sem_gpa; //semester gpa is updated.
+
+				//sort all courses for this semester
+				auto R6 = get<2>((*get<2>((*it1)->second))[semester]);
+				std::sort(R6->begin(), R6->end(), compareFunction);//sort the vector
+				//for (auto it5 = R6.begin(); it5 != R6.end();it5++) {//loop through the vector
+
+				//}
+			}
+			else if (it2 == R1.end()) {//if the semester doesn't exist, create a new semester
+				if ((std::find(v.begin(), v.end(), c.name) != v.end())) {}//If course exists in v, do nothing.
+				else {
+					tuple<int, float, vector<course* >*> t{ 0,0.00,new vector<course* > }; //t is the new tuple.
+					auto& R2 = *(get<2>(t));//R2 is refered to the vector containing all the course info.
+					auto cour = new course(c.name, c.section, c.credits, c.grade); //create a course has identical info like c
+					R2.push_back(cour); //Add cour to the vector. By far, tuple is all set.
+					//auto m = new map<int, tuple<int, float, vector<course* >*> >{ {semester, t } };//map is all set. m is the address of the map.
+					R1.insert({ semester, t });
+
+					//get<2>((*it1)->second) = m;//Assign the address of the map (m) to the third section of the overall tuple.
+
+					//update semester gpa + credits.
+					float sem_gpa = 0.00; //(get<1>(R1[semester]));
+					float sem_totalScore = 0.00;
+					int sem_totalCredit = 0;
+					int sem_cre = (get<0>(R1[semester])) + c.credits; //sem_cre is the updated credit value of the semester.
+
+					for (auto it4 = R2.begin(); it4 != R2.end(); it4++) {//loop through R2's all courses (vector)
+						sem_totalCredit += (*it4)->credits; //calcualte semester total credit
+						sem_totalScore += (*it4)->getGPAScore(); //calculate semester total gpa score.
+					}
+					sem_gpa = sem_totalScore / sem_totalCredit;
+
+					get<0>(R1[semester]) = sem_totalCredit;
+					get<1>(R1[semester]) = sem_gpa; //semester gpa is updated.
+
+					//sort all courses for this semester
+					auto R6 = get<2>((*get<2>((*it1)->second))[semester]);
+					std::sort(R6->begin(), R6->end(), compareFunction);//sort the vector
+				}
+			}
+			//when a student is found, update overall gpa + credits.
+			auto R12 = (*(get<2>((*it1)->second))); //R12 refers to the map.
+			for (auto it12 = R12.begin(); it12 != R12.end();it12++) {
+				overall_totalCredit += get<0>(it12->second);
+				overall_totalScore += get<0>(it12->second) * get<1>(it12->second);
+				overall_gpa = overall_totalScore / overall_totalCredit;
+			}
+			
+			get<1>((*it1)->second) = overall_gpa;
+			get<0>((*it1)->second) = overall_totalCredit;//overall gpa is updated.
+			//both updated.
+
+			//sort all courses
+			
+		}
+		++it1;
+	}
+
+	return;
+}
+
+void drop_course(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id, course c) {
+	//Your code
+	auto it1{ DB.begin() };
+	bool found{ false };
+	while (it1 != DB.end()) { //loop
+		if ((*it1)->first == id) { //check if the student exists already in DB
+
+			//create a vector storing all the courses
+			vector <string> v;
+			auto R10 = *(get<2>((*it1)->second));//R10 refers the map.
+			for (auto it10 = R10.begin(); it10 != R10.end(); it10++) {//loop through all semester and add all courses to the vector v.
+				auto R11 = (*(get<2>(it10->second))); //R11 refers to course vector.
+				for (auto it11 = R11.begin(); it11 != R11.end(); it11++) {
+					v.push_back((*it11)->name);
+				}
+			}
+
+			//overall info for this student
+			float overall_gpa = 0.00;
+			int overall_totalCredit = 0;
+			float overall_totalScore = 0.00;
+
+
+			auto& R1 = (*(get<2>((*it1)->second))); //R1 is refered to the current student's map.
+			auto it2{ R1.find(semester) }; //it2 has the address value returned by R1.find(). R1.find() returns R1.end() if not found.
+			if (it2 != R1.end()) { //that means the sememster exist.
+				auto& R2 = (*(get<2>(R1[semester]))); //R2 is refered to the vector containing all the course info.
+				//auto it3 = find(R2.begin(), R2.end(), &c); //find will return the address of the first matched course element within the specified range.
+														  //Will return end() if no match found.
+				auto it3 = R2.begin();
+				while (it3!=R2.end()) {//loop through the vector
+					if((*(*it3)) == c){ //check if course matched
+						found = true;
+						break;
+					}
+					++it3;
+				}
+				if (found) {// course exists.
+					it3 = R2.erase(it3); //Remove the element that it3 points to.
+					//update semester gpa + credits.
+					float sem_gpa = 0.00; //(get<1>(R1[semester]));
+					float sem_totalScore = 0.00;
+					int sem_totalCredit = 0;
+					int sem_cre = (get<0>(R1[semester])) + c.credits; //sem_cre is the updated credit value of the semester.
+
+					for (auto it4 = R2.begin(); it4 != R2.end(); it4++) {//loop through R2's all courses (vector)
+						sem_totalCredit += (*it4)->credits; //calcualte semester total credit
+						sem_totalScore += (*it4)->getGPAScore(); //calculate semester total gpa score.
+					}
+					sem_gpa = sem_totalScore / sem_totalCredit; //semester gpa is updated.
+
+					get<0>(R1[semester]) = sem_totalCredit;
+					get<1>(R1[semester]) = sem_gpa; //both updated.
+					//sort all courses for this semester
+					auto R6 = get<2>((*get<2>((*it1)->second))[semester]);
+					std::sort(R6->begin(), R6->end(), compareFunction);//sort the vector
+				}
+			}
+			
+			//when a student is found, update overall gpa + credits.
+			auto R12 = (*(get<2>((*it1)->second))); //R12 refers to the map.
+			for (auto it12 = R12.begin(); it12 != R12.end(); it12++) {
+				overall_totalCredit += get<0>(it12->second);
+				overall_totalScore += get<0>(it12->second) * get<1>(it12->second);
+				overall_gpa = overall_totalScore / overall_totalCredit;
+			}
+
+			get<1>((*it1)->second) = overall_gpa;
+			get<0>((*it1)->second) = overall_totalCredit;//overall gpa is updated.
+			//both updated.
+		}
+		++it1;
+	}
+	return;
+}
+
+void print_student_semester_courses(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int semester, int id) {
+	//Your code
+	auto it1{ DB.begin() };
+	bool found{ false };
+	while (it1 != DB.end()) { //loop
+		if ((*it1)->first == id) { //check if the student exists already in DB
+			cout << "Student ID: " << id << endl; //print student ID
+			auto& R1 = (*(get<2>((*it1)->second))); //R1 is refered to the current student's map.
+			auto it2{ R1.find(semester) }; //it2 has the address value returned by R1.find(). R1.find() returns R1.end() if not found.
+			if (it2 != R1.end()) { //that means the sememster exist.
+				cout << "Semester: " << it2->first << endl; //print semester
+				auto& R2 = (*(get<2>(R1[semester]))); //R2 is refered to the vector containing all the course info.
+				cout << "GPA: " << setprecision(2) << fixed << get<1>(R1[semester]) << endl; //print GPA
+				cout << "Credits: " << get<0>(R1[semester]) << endl; //print credits
+
+				for (auto it3 = R2.begin(); it3 != R2.end(); it3++) { //loop through all the vector
+					cout << " (" << (*it3)->name << " " << (*it3)->section << " " << (*it3)->credits << " " << (*it3)->grade << ") ";//print all course info of the specified semester.
+				}
+				cout << endl;
+			}
+			else { cout << "Semester doesn't exist." << endl; }
+		}
+		++it1;
+	}
+	cout << endl;
+	return;
+}
+void print_student_all_courses(list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB, int id) {
+	//Your code
+	auto it1{ DB.begin() };
+	while (it1 != DB.end()) { //loop
+		if ((*it1)->first == id) { //check if the student exists already in DB
+			cout << "Student ID: " << id << endl; //print student ID
+			cout << "Overall GPA: " << setprecision(2) << fixed << get<1>((*it1)->second) << endl;//print overall gpa
+			cout << "Overall Credits: " << get<0>((*it1)->second) << endl;//print overall credit
+			auto& R1 = (*(get<2>((*it1)->second))); //R1 is refered to the current student's map.
+			auto it2{ R1.begin()};
+			while (it2 != R1.end()) { //loop through R1(map)
+				cout << "Semester: " << it2->first << endl; //print semester
+				int semester = it2->first;
+				auto& R2 = (*(get<2>(R1[semester]))); //R2 is refered to the vector containing all the course info.
+				cout << "GPA: " << setprecision(2) << fixed << get<1>(R1[semester]) << endl; //print GPA
+				cout << "Credits: " << get<0>(R1[semester]) << endl; //print credits
+
+				for (auto it3 = R2.begin(); it3 != R2.end(); it3++) { //loop through all the vector
+					cout << " (" << (*it3)->name << " " << (*it3)->section << " " << (*it3)->credits << " " << (*it3)->grade << ") ";//print all course info of the specified semester.
+				}
+				cout << endl;
+				it2++;
+			}
+		}
+		++it1;
+	}
+	cout << endl;
+	return;
+}
+
+ostream& operator<< (ostream& str, const list<pair<int, tuple<int, float, map<int, tuple<int, float, vector<course* >*> >*> >*>& DB) {
+	for (auto it1 = DB.begin(); it1 != DB.end(); it1++) {//loop through the list
+		str << "Student ID: " << (*it1)->first << endl;
+		str << "Overall GPA: " << get<1>((*it1)->second) << endl;
+		str << "Overall Credits: " << get<0>((*it1)->second) << endl;
+
+		for (auto it2 = (*(get<2>((*it1)->second))).begin(); it2 != (*(get<2>((*it1)->second))).end(); it2++){//it2 points to the begin of the map; loop through the map
+			str << "Sememster: " << it2->first << endl;
+			str << "GPA: " << get<1>(it2->second) << endl;
+			str << "Credits: " << get<0>(it2->second) << endl;
+			for (auto it3 = (*(get<2>(it2->second))).begin(); it3 != (*(get<2>(it2->second))).end();it3++) {//it3 points to the vector.(*(get<2>(it2->second))) is the course vector. loop through it.
+				str << " (" << (*it3)->name << " " << (*it3)->section << " " << (*it3)->credits << " " << (*it3)->grade << ") ";
+			}
+			str << endl;
+		}
+	}
+	return str;
+}

@@ -1,0 +1,728 @@
+//CIS554 Yifei Che HW4
+//SUID: 636109055 NETID: yche03
+//HW4
+//Due : April 3, Saturday, at 11 : 59PM
+
+
+#include <iostream>
+#include <vector>
+//#include <list>
+//#include <string>
+
+using namespace std;
+template <class T> class ThreeD {
+public:
+	T ht;
+	T wid;
+	T dep;
+	ThreeD() :ht(0), wid(0), dep(0) {}
+	ThreeD(T i, T j, T k) :ht(i), wid(j), dep(k) {}
+	T getVol() const { return ht * wid * dep; }
+	bool operator==(const ThreeD<T>& t) { return getVol() == t.getVol(); }
+};
+
+template <class T> class node {
+public:
+	T value;
+	node<T>* next;
+	node<T>* previous;
+	node<T>() { next = nullptr; previous = nullptr; }
+	node<T>(T v) { value = v; next = nullptr; previous = nullptr; }
+	bool operator==(const node<T>& t) const { return value == t.value; }
+};
+
+template <class T> ostream& operator<<(ostream& str, const ThreeD<T>& t);
+
+template <class T> class linked_list {
+public:
+	node<T>* head;
+	node<T>* tail;
+	linked_list() { head = tail = nullptr; }
+	linked_list(const initializer_list<T>& V);
+	void push_front(T t);
+	void push_back(T t);
+	bool operator==(const linked_list<T>& L) const;
+
+	linked_list(const linked_list<T>& L); //copy constructor
+	linked_list(linked_list<T>&& L); //move constructor
+	~linked_list();//destructor
+	void operator=(const linked_list<T>& L);//L-value operator=; copy assignment
+	void operator=(linked_list<T>&& L);//R-value operator= ; move assignment
+	template <class T> friend ostream& operator<<(ostream& str, const linked_list<T>& L);
+};
+
+template <class T> ostream& operator<<(ostream& str, const linked_list<T>& L);
+
+template <class T> linked_list<T>::linked_list(const initializer_list<T>& V) : linked_list() {
+	//Your code
+	auto it = V.begin();
+	
+	node<T>* it1 = nullptr, * it2 = nullptr; //it1 points to the current node, 
+	while (it != V.end()) {
+		
+		it2 = new node<T>(*it);//(*it) is a value. it2 points to the new node.
+		if (it == V.begin()) { head = it2; }
+		it2->previous = it1; //it1 points to  the previous node of it2
+		if (it1 != nullptr) { it1->next = it2; }//When it's not the first element, connect *it1 and * it2.
+		it1 = it2; 
+		it++;//move the current node to the next one
+	}it2 = nullptr;
+
+	tail = it1;//assign tail
+	
+	cout << "initializer_list LL    " << endl;
+}
+
+template <class T> linked_list<T>::~linked_list() {  //destructor										
+	//Your code
+	node<T>* it = head;
+	while (it != nullptr) {
+		node<T>* n = it->next;
+		delete it;
+		it = n;
+	}
+	cout << "Destructor LL    " << endl;
+}
+
+template <class T> linked_list<T>::linked_list(const linked_list<T>& L) : linked_list() { //copy constructor																			  																		  //num_nodes = 0;
+	//Your code
+	if (L.head == nullptr) {
+		head = nullptr;
+		tail = nullptr;
+	}
+	else {
+		node<T>* it = L.head;
+		node<T>* it1 = nullptr, * it2 = nullptr;
+		int count = 0;
+		while (it != nullptr) {
+			it2 = new node<T>(it->value);
+			if (count == 0) { head = it2; } count++;
+			it2->previous = it1;
+			if (it1 != nullptr)it1->next = it2;
+			it1 = it2;	
+			it = it->next;
+		}it2 = nullptr;
+		tail = it1;
+	}
+	cout << "Copy Constructor LL    " << endl;
+}
+template <class T> linked_list<T>::linked_list(linked_list<T>&& L) {//move constructor
+	//Your code
+	head = L.head;
+	tail = L.tail;
+	L.head = nullptr;
+	L.tail = nullptr;
+	cout << "Move Constructor LL    " << endl;
+}
+
+template <class T> void linked_list<T>::operator=(const linked_list<T>& L) { //Lvalue operator=
+//Your code
+	node<T>* it = head;
+	while (it != nullptr) {
+		node<T>* n = it->next;
+		delete it;
+		it = n;
+	}//destructor
+
+	if (L.head == nullptr) {
+		head = nullptr;
+		tail = nullptr;
+	}
+	else {
+		node<T>* it = L.head;
+		node<T>* it1 = nullptr, * it2 = nullptr;
+		int count = 0;
+		while (it != nullptr) {
+			it2 = new node<T>(it->value);
+			if (count == 0) { head = it2; } count++;
+			it2->previous = it1;
+			if (it1 != nullptr)it1->next = it2;
+			it1 = it2;
+			it = it->next;
+		}it2 = nullptr;
+		tail = it1;
+	}
+	cout << "Copy Assignment LL    " << endl;
+}
+
+template<class T> void linked_list<T>::operator=(linked_list<T>&& L) {//R-value operator=
+	//Your code
+	node<T>* it = head;
+	while (it != nullptr) {
+		node<T>* n = it->next;
+		delete it;
+		it = n;
+	}//destructor
+
+	head = nullptr;
+	tail = nullptr;
+	head = L.head;
+	tail = L.tail;
+	L.head = nullptr;
+	L.tail = nullptr;
+
+	cout << "Move Assignment LL    " << endl;
+}
+
+
+template <class T> void linked_list<T>::push_front(T t) {
+	node<T>* p = new node<T>(t);
+	if (head == nullptr) { head = tail = p; }
+	else {
+		p->next = head;
+		head->previous = p;
+		head = p;
+	}
+}
+
+template <class T> void linked_list<T>::push_back(T t)
+{
+	node<T>* p = new node<T>(t);
+	if (head == nullptr) { head = tail = p; }
+
+	else {
+		p->previous = tail;
+		tail->next = p;
+		tail = p;
+	}
+}
+
+template <class T> bool linked_list<T>::operator==(const linked_list<T>& L) const {
+	//Your code
+	node<T>* it1 = head;
+	node<T>* it2 = L.head;
+	int count1 = 0;
+	int count2 = 0;
+
+	while (it1 != nullptr) {//GO THROUGH THE LEFT LLIST
+		count1++;
+		it1 = it1->next;
+	}
+	while (it2 != nullptr) {//GO THROUGH THE RIGHT LLIST
+		count2++;
+		it2 = it2->next;
+	}
+	if (count1 != count2) {//COMPARE THE SIZE OF BOTH LLISTS
+		return false; 
+	} 
+	else {//IF THE SIZE ARE THE SAME
+		it1 = head;
+		it2 = L.head;
+		while (it1 != nullptr && it2 != nullptr) {//GO THROUGH BOTH LLISTS
+			if (it1->value == it2->value) {//COMPARE VALUES IF TRUE
+				it1 = it1->next;
+				it2 = it2->next;
+			}
+			else {
+				return false; //IF NOT EQUAL, RETURN FALSE.
+			}
+		}
+		cout << "operator== LL    " <<endl;
+		return true;
+	}
+}
+
+template <class X> class NODE {
+public:
+	X value;
+	NODE<X>* l_child;
+	NODE<X>* r_child;
+	NODE<X>* next;
+	NODE<X>() : l_child(nullptr), r_child(nullptr), next(nullptr) {}
+	NODE<X>(X t) : l_child(nullptr), r_child(nullptr), next(nullptr), value(t) {}
+};
+
+template <class X> class Triangle {
+public:
+	NODE<X>* head;
+	Triangle() : head(nullptr) {};
+	//Triangle(int n);//constructor for an n-level triangle.
+	Triangle(const initializer_list<initializer_list<X>>& I);//initializer_list
+	~Triangle();// {};//destructor
+	Triangle(const Triangle<X>& T); //copy constructor
+	void operator=(const Triangle<X>& T); //copy assignment (Lvalue assignment)
+	Triangle<X> ThreeTimes(); //ThreeTimes
+	Triangle(Triangle<X>&& T);//move constructor
+	void operator=(Triangle<X>&& T);//move assignment (Rvalue assignment)
+	bool operator==(const Triangle<X>& T);
+};
+
+template <class X> bool Triangle<X>::operator==(const Triangle<X>& T) {
+	//Your code
+	NODE<X>* p1 = head;
+	NODE<X>* p2 = T.head;
+	int count1 = 0;//SIZE TRACKER
+	int count2 = 0;
+
+	while (p1) {
+		//all levels	
+		NODE <X>* currentfirst = p1; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+		do {
+			n = p1->next;
+			count1++;
+			p1 = n;
+		} while (n != currentfirst);
+		p1 = nextfirst;
+	}
+	while (p2) {
+		//all levels	
+		NODE <X>* currentfirst = p2; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+		do {
+			n = p2->next;
+			count2++;
+			p2 = n;
+		} while (n != currentfirst);
+		p2 = nextfirst;
+	}
+	if (count1 != count2) { return false; }
+	else {//the sizes are equal
+		NODE<X>* p1 = head;
+		NODE<X>* p2 = T.head;
+		while ((p1 != nullptr) && (p2 != nullptr)) {//GO THROUGH BOTH LLISTS
+			//all levels	
+			NODE <X>* currentfirst = p1; //currentfirst points to the first node of the current level.
+			NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+			NODE <X>* n;
+
+			NODE <X>* currentfirst2 = p2; //currentfirst points to the first node of the current level.
+			NODE <X>* nextfirst2 = currentfirst2->l_child; //nextfirst points to the first node of the next level.
+			NODE <X>* n2;
+
+			do {
+				n = p1->next;
+				n2 = p2->next;
+
+				if (p1->value == p2->value) {//COMPARE VALUES IF TRUE
+
+				}else{ return false; }//COMPARE VALUES IF NOT TRUE
+				//COMPARATION IS TRUE		
+				p1 = n;
+				p2 = n2;
+			} while ((n != currentfirst) && (n2 != currentfirst2));
+			p1 = nextfirst;
+			p2 = nextfirst2;//current pointer points to the next level first.
+
+		}
+		//cout << "operator== Triangle" << endl;
+		return true;
+	}
+	
+}
+
+template <class X> void Triangle<X>::operator=(Triangle<X>&& T) {//Move assignment (Rvalue assignment)
+	//Your code
+	//destructor portion
+	NODE <X>* p3{ head };
+
+	while (p3) {
+
+		//all levels	
+		NODE <X>* currentfirst = p3; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+
+		do {
+			n = p3->next;
+			delete p3;
+			p3 = n;
+		} while (n != currentfirst);
+
+		p3 = nextfirst;//p3 moves to next level.
+	}
+	//destructor portion ends here.
+	head = T.head;
+	T.head = nullptr;
+
+	cout << "Move Assignment Triangle" << endl;
+}
+
+template <class X> Triangle<X>::Triangle(Triangle<X>&& T) : Triangle() {//move constructor
+	//Your code
+	head = T.head;
+	T.head = nullptr;
+	cout << "Move Constructor Triangle" << endl;
+}
+
+ template <class X> Triangle<X> Triangle<X>::ThreeTimes() {//ThreeTimes
+	//Your code
+	Triangle<X> temp {*this}; //copy constructor
+	NODE<X>* p3(temp.head);
+
+	while (p3) {
+		//all levels	
+		NODE <X>* currentfirst = p3; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+
+		do {
+			n = p3->next;
+			p3->value *= 3;
+			p3 = n;
+		} while (n != currentfirst);
+
+		p3 = nextfirst;//p3 moves to next level.
+	}
+
+	cout << "ThreeTimes Triangle" << endl;
+	return temp;
+}
+
+template <class X> Triangle<X>::~Triangle() {
+	NODE <X>* p3{ head };
+
+	while (p3) {
+		
+		//all levels	
+		NODE <X>* currentfirst = p3; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+
+		do {
+			n = p3->next;
+			delete p3;
+			p3 = n;
+		} while (n != currentfirst);
+
+		p3 = nextfirst;//p3 moves to next level.
+	}
+	cout << "Destructor Triangle" << endl;
+}
+
+template <class X> void Triangle<X>::operator=(const Triangle<X>& T) {//copy assignment
+	//Your code
+
+	//destructor portion
+	NODE <X>* p3{ head };
+
+	while (p3) {
+
+		//all levels	
+		NODE <X>* currentfirst = p3; //currentfirst points to the first node of the current level.
+		NODE <X>* nextfirst = currentfirst->l_child; //nextfirst points to the first node of the next level.
+		NODE <X>* n;
+
+		do {
+			n = p3->next;
+			delete p3;
+			p3 = n;
+		} while (n != currentfirst);
+
+		p3 = nextfirst;//p3 moves to next level.
+	}
+	//destructor portion ends here.
+
+	//copy constructor portion
+	NODE<int>* p1{ T.head }, * p2;
+	//Create a triangle structure with all nodes empty
+	vector <NODE <int>*> V; //vector of pointers for all nodes
+
+	int level = 1;
+	int qualifier = 0;
+
+	//LEVEL 1
+	p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+	V.push_back(p2); //add the pointers of node to the vector
+	p1 = p1->l_child;
+
+	while (p1 != nullptr) {
+		//OTHER LEVELS		
+		NODE <int>* currentFirst = p1; //currentFirst points to the first node of the current level.
+		NODE <int>* nextFirst = currentFirst->l_child; //nextFirst points to the first node of the next level.
+
+		p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+		V.push_back(p2); //add the pointers of node to the vector
+		do {//go through the current level		
+			p1 = p1->next;
+			p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+			V.push_back(p2); //add the pointers of node to the vector
+		} while (p1->next != currentFirst);
+
+		p1 = nextFirst;//p moves to next level.
+	}//All nodes added to V.
+
+	//Assign next, L&R child.
+	int index = 0;
+	for (auto it2 = V.begin(); it2 != V.end(); it2++) { //go through the vector
+		if (it2 == V.begin()) {//first node
+			head = &(*(*it2));
+			(*it2)->next = &(*(*it2)); //points to itself
+			(*it2)->l_child = &(*(V.at(index + level)));
+			(*it2)->r_child = &(*(V.at(index + (level + 1))));
+
+			qualifier++;
+			if (level == qualifier) {
+				level++;
+				qualifier = 0;
+			}
+			index++;
+		}
+		else {//not the first node 
+			//"next" connection
+			if ((qualifier + 1) == level) {// the last element of current level
+				(*it2)->next = &(*(V.at(index - (level - 1)))); //let the current node's next points to the first element of the current level.
+			}
+			else {//not last element of the current level
+				(*it2)->next = &(*(V.at(index + 1))); //points to next
+			}
+
+			//"L&R child" connection
+			if ((index + level + 1) > V.size()) {//current node's r_child is out of bound
+				(*it2)->l_child = nullptr;
+				(*it2)->r_child = nullptr;
+			}
+			else {//not out of bound
+				(*it2)->l_child = &(*(V.at(index + level))); //set its l & r child
+				(*it2)->r_child = &(*(V.at(index + (level + 1))));
+			}
+			qualifier++;
+			if (level == qualifier) {
+				level++;
+				qualifier = 0;
+			}
+			index++;
+		}
+	}
+
+	//copy constructor portion ends here.
+
+
+	cout << "Copy Assignment Triangle" << endl;
+}
+
+template <class X> Triangle<X>::Triangle(const Triangle<X>& T) : Triangle() { //copy constructor
+	//Your code
+	NODE<int>* p1{ T.head }, * p2;
+	//Create a triangle structure with all nodes empty
+	vector <NODE <int>*> V; //vector of pointers for all nodes
+
+	int level = 1;
+	int qualifier = 0;
+
+	//LEVEL 1
+	p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+	V.push_back(p2); //add the pointers of node to the vector
+	p1 = p1->l_child;
+
+	while(p1 != nullptr){
+		//OTHER LEVELS		
+		NODE <int>* currentFirst = p1; //currentFirst points to the first node of the current level.
+		NODE <int>* nextFirst = currentFirst->l_child; //nextFirst points to the first node of the next level.
+		
+		p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+		V.push_back(p2); //add the pointers of node to the vector
+		do {//go through the current level		
+			p1 = p1->next;
+			p2 = new NODE<int>(p1->value);//create new NODE which contains same value
+			V.push_back(p2); //add the pointers of node to the vector
+		} while (p1->next != currentFirst);
+		
+		p1 = nextFirst;//p moves to next level.
+	}//All nodes added to V.
+
+	//Assign next, L&R child.
+	int index = 0;
+	for (auto it2 = V.begin(); it2 != V.end(); it2++) { //go through the vector
+		if (it2 == V.begin()) {//first node
+			head = &(*(*it2));
+			(*it2)->next = &(*(*it2)); //points to itself
+			(*it2)->l_child = &(*(V.at(index + level)));
+			(*it2)->r_child = &(*(V.at(index + (level + 1))));
+
+			qualifier++;
+			if (level == qualifier) {
+				level++;
+				qualifier = 0;
+			}
+			index++;
+		}
+		else {//not the first node 
+			//"next" connection
+			if ((qualifier + 1) == level) {// the last element of current level
+				(*it2)->next = &(*(V.at(index - (level - 1)))); //let the current node's next points to the first element of the current level.
+			}
+			else {//not last element of the current level
+				(*it2)->next = &(*(V.at(index + 1))); //points to next
+			}
+
+			//"L&R child" connection
+			if ((index + level + 1) > V.size()) {//current node's r_child is out of bound
+				(*it2)->l_child = nullptr;
+				(*it2)->r_child = nullptr;
+			}
+			else {//not out of bound
+				(*it2)->l_child = &(*(V.at(index + level))); //set its l & r child
+				(*it2)->r_child = &(*(V.at(index + (level + 1))));
+			}
+			qualifier++;
+			if (level == qualifier) {
+				level++;
+				qualifier = 0;
+			}
+			index++;
+		}
+	}
+
+
+	cout << "Copy Constructor Triangle" << endl;
+}
+
+template <class X> Triangle<X>::Triangle(const initializer_list<initializer_list<X>>& I) {
+
+	//Your code
+	//Triangle<int> T1{ {1},  {2,3},  {4, 5, 6}, {7,8, 9, 10} };//initializer_list
+
+		int level = 1;
+		int qualifier = 0;
+
+		vector <NODE<X> *> V; //vector of pointers for all nodes
+		for (auto it = I.begin(); it != I.end(); it++) {//go through the outer list
+			auto& InnerList = (*it);	//Rename Inner List 
+			for (auto it2 = InnerList.begin(); it2 != InnerList.end(); it2++) {//go through the inner list
+				auto& InnerListItem = (*it2);//Rename Inner list item. <int>
+
+				NODE <X> * p = new NODE <X>(InnerListItem); //create a new node
+				V.push_back(p); //add the pointers of node to the vector
+			}
+		}//finish adding nodes to vector.
+
+		int index = 0;
+		for (auto it2 = V.begin(); it2 != V.end(); it2++) { //go through the vector
+			if (it2 == V.begin()) {//first node
+				head = &(*(*it2));
+				(*it2)->next = &(*(*it2)); //points to itself
+				(*it2)->l_child = &(*(V.at(index + level)));
+				(*it2)->r_child = &(*(V.at(index + (level + 1))));
+
+				qualifier++;
+				if (level == qualifier) {
+					level++; 
+					qualifier = 0;
+				}
+				index++;
+			}
+			else {//not the first node 
+				//"next" connection
+				if ((qualifier + 1) == level) {// the last element of current level
+					(*it2)->next = &(*(V.at(index - (level - 1)))); //let the current node's next points to the first element of the current level.
+				}
+				else {//not last element of the current level
+					(*it2)->next = &(*(V.at(index + 1))); //points to next
+				}
+
+				//"L&R child" connection
+				if ((index + level + 1) > V.size()) {//current node's r_child is out of bound
+					(*it2)->l_child = nullptr;
+					(*it2)->r_child = nullptr;
+				}
+				else {//not out of bound
+					(*it2)->l_child = &(*(V.at(index + level))); //set its l & r child
+					(*it2)->r_child = &(*(V.at(index + (level + 1))));
+				}
+					qualifier++;
+					if (level == qualifier) {
+						level++; 
+						qualifier = 0;
+					}
+					index++;
+				//}
+			}
+		}
+		cout << "initializer_list Triangle" << endl;
+	}
+
+template <class T> ostream& operator<<(ostream& str, const ThreeD<T>& t);
+template <class T> ostream& operator<<(ostream& str, const linked_list<T>& L);
+template <class X> ostream& operator<<(ostream& str, const Triangle<X>& T);
+
+int main() {
+	Triangle<int> T1{ {1},  {2,3},  {4, 5, 6}, {7,8, 9, 10} };//initializer_list
+	cout << T1 << endl;
+	
+	Triangle<int> T2{ T1 };
+	cout << T2 << endl;
+	
+	Triangle<int> T3;
+	T3 = T1;
+	cout << T3 << endl;
+	
+	Triangle<int> T4;
+	T4 = T1.ThreeTimes();
+	cout << T4 << endl;
+
+	
+	Triangle<linked_list<ThreeD<int>>> T5{ {{{3,4,5},{7,1,4},{6,7,3}}}, {{ {5,4,8 },{4,2,16  }, {7, 8, 4} } ,{ { {8,2,4},{8,4,4}}} } };
+
+	////};
+	cout << T5 << endl;
+
+	
+	Triangle<linked_list<ThreeD<int>>>  T6{ {{{3,5,4},{7,2,2},{6,7,3}}}, {{ {5,2,16 },{4,1,32  }, {7, 8, 4} } ,{ { {4,4,4},{4,8,4}}} } };
+
+	cout << T6 << endl;
+
+	
+	if (T5 == T6) cout << "EQUAL" << endl;
+	else cout << "NOT EQUQL" << endl;
+
+	
+	Triangle<linked_list<ThreeD<int>>>* p1 = new Triangle<linked_list<ThreeD<int>>>
+	{ {{{3,4,5},{7,1,4},{6,7,3}}}, {{ {5,4,8 },{4,2,16  }, {7, 8, 4} } ,{ { {8,2,4},{8,4,4}}} } };
+	cout << *p1 << endl;
+	delete p1;
+	
+	return 0;
+}
+
+template <class T> ostream& operator<<(ostream& str, const ThreeD<T>& t) {
+	//Your code
+	str << "(" << t.ht << "," << t.wid << "," << t.dep << ")";
+	return str;
+}
+
+template <class T> ostream& operator<<(ostream& str, const linked_list<T>& L) {
+	//Your code
+	if (L.head == nullptr) { return str; }//check if it's empty
+	node<T>* it = L.head;
+	str << "[";
+
+	while (it!=L.tail) {
+		str << it->value << " ";
+		it = it->next;
+	}
+
+	str << L.tail->value << "]";
+	return str;
+}
+
+template <class X> ostream& operator<<(ostream& str, const Triangle<X>& T) {
+	//Your code
+	NODE <X>* p = T.head; //p points to what head points to.
+
+	//PRINT FIRST LEVEL
+	str << "{";
+	str << p->value << " ";
+	str << "}" << endl;//the current level is well-printed.
+	p = p->l_child;//p moves to next level.
+	
+	//PRINT OTHER LEVELS
+		while ((p != nullptr)) {//loop through levels  //(p->l_child != nullptr) || 
+
+		NODE <X>* currentFirst = p; //currentFirst points to the first node of the current level.
+		NODE <X>* nextFirst = currentFirst->l_child; //nextFirst points to the first node of the next level.
+
+			str << "{";
+			str << p->value << " ";
+			do {//go through the current level		
+				p = p->next;
+				str << p->value << " ";
+			} while (p->next != currentFirst);
+			str << "}" << endl;//the current level is well-printed.
+			p = nextFirst;//p moves to next level.
+	}
+	return str;
+}
+

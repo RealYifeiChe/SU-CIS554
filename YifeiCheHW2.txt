@@ -1,0 +1,225 @@
+//HW2 by Yifei Che
+//SU Net ID: yche03  SUID: 636109055
+
+#include <iostream>
+#include <string>
+using namespace std;
+//int m = 50;
+class Node {
+public:
+	int value;
+	Node* l_child;
+	Node* r_child;
+	Node() : l_child(nullptr), r_child(nullptr) {}
+	Node(int i) :value(i), l_child(nullptr), r_child(nullptr) {}
+
+};
+
+
+
+class Tree { //an n-level full binary tree of 2^n - 1 nodes
+public:
+	Node* root;
+	Tree() : root(nullptr) {}
+	Node* makeTree(int n, int m);
+	void printTree1(Node* p); //in-order printing
+	void printTree2(Node* p); //pre-order printing
+	void printTree3(Node* p); //post-order printing
+	void mirror(Node* p);
+	int sum(Node* p);
+
+
+
+	/*
+	HW2: Implement the following three member functions.
+	*/
+
+	Node* mirrorCopy(Node* p);//5 points
+	//Create an external mirror copy of a tree rooted at a node pointed by p
+	//and return a pointer pointing to the root of this external tree.
+	//Note that the function will not change the original tree.
+	//You are required to implement this function with recursion.
+
+
+	void minHeap(Node* p);//8 points
+	//Recall that in a Min Heap, at all nodes, 
+	//value(parent)<= value(l_child) and value(parent) <= value(r_child).
+	//This function re-structures the tree, whose root is pointed by p, into a Min Heap.
+	//You are required to use recursion.
+
+	pair<Node*, Node* > sort(Node* p);//22 points
+	//sorting such that
+	//ascending sequence in pre-order traversal
+	//This function returns a pair of pointers,  which point to the node with the smallest
+	//value and the node with the largest values in the tree rooted at node pointed by p .
+	//printTree2 will give a sorted sequence.
+	//You are required to use recursion, but additional while loop is allowed.
+};
+
+Node* Tree::mirrorCopy(Node* p) {
+
+	//Your code
+	//this method should create T2 from the beginning. (similar to makeTree(int i, int m) but mirrored.)
+
+	Node* p2 = new Node(p->value); //initialize a new root node for T2 by assigning an int value.
+	if (!p || !p->l_child) return p2;//i*f node*p doesnot exist or the tree only has one node, return p2. (Same as p.)
+	//then make child branches with mirrored values.
+	p2->l_child = mirrorCopy((p->r_child)); //create the left child node with the right value of p. Recursion.
+	p2->r_child = mirrorCopy((p->l_child)); //create the right child node with the left value of p. Recursion.
+	return p2;
+}
+void Tree::minHeap(Node* p) {
+	//Your code
+	if (!p || !p->l_child) return;//if node*p doesnot exist or the tree only has one node, return void.
+	if ((p->l_child)) {//make sure the second last level is executed rn. The last level doesn't need to be examined.
+		minHeap(p->l_child); //recursion
+		minHeap(p->r_child); //recursion
+		
+		int minTemp;
+		if ((p->l_child)->value < p->value) { //if the L child's value is less than P's value, swap them (value only).
+			minTemp = p->value;
+			p->value = (p->l_child)->value;
+			(p->l_child)->value = minTemp; 
+		}
+		if ((p->r_child)->value < p->value) { //if the R child's value is less than P's value, swap them (value only).
+			minTemp = p->value;
+			p->value = (p->r_child)->value;
+			(p->r_child)->value = minTemp;
+		}
+		//now the parent node has the minimum value. 
+	}
+	return;
+
+}
+
+pair<Node*, Node* >  Tree::sort(Node* p) {
+	minHeap(p); //make sure all parents are the min value to its children.
+	//Your code
+	if (!p || !p->l_child) return pair < Node*, Node* >{p,p};//if node*p doesnot exist or the tree only has one node, return void.
+	if ((p->l_child)) {//make sure the second last level is executed rn. The last level doesn't need to be examined.
+		//Node* Lmin; Node* Lmax; Node* Rmin; Node* Rmax;
+		pair < Node*, Node* > leftPair = sort(p->l_child); //recursion
+		pair < Node*, Node* > rightPair = sort(p->r_child); //recursion
+		Node* maxChild = p;
+		if ((leftPair.second)->value > maxChild->value) {
+			maxChild = leftPair.second;
+		}
+		if ((rightPair.second)->value > maxChild->value) {
+			maxChild = rightPair.second;
+		}
+		while ((leftPair.second)->value > (rightPair.first)->value) {//while left max > right min
+			//if ((leftPair.second)->value == (leftPair.first)->value) { //swap them (value only). At the lowest level.
+			//	swap((leftPair.second)->value, (rightPair.first)->value);
+			//	swap((leftPair.first)->value, (rightPair.second)->value);
+			//}
+			//else{//swap them (value only).Not at the lowest level.
+			//	swap((leftPair.second)->value, (rightPair.first)->value); //compare
+			//	leftPair = sort(p->l_child); //recursion
+			//	rightPair = sort(p->r_child); //recursion
+			//}
+
+			swap((leftPair.second)->value, (rightPair.first)->value); //compare
+			leftPair = sort(p->l_child);  //recursion
+			rightPair = sort(p->r_child); //recursion
+		}
+		return pair < Node*, Node* >{p, maxChild};//return min node and max node
+	}
+}
+
+
+
+
+
+int Tree::sum(Node* p) {
+	if (!p) return 0;
+	if (!p->l_child) return p->value;
+	return p->value + sum(p->l_child) + sum(p->r_child);
+}
+
+void Tree::mirror(Node* p) {
+	if (!p || !p->l_child) return;
+	mirror(p->l_child);
+	mirror(p->r_child);
+	swap(p->l_child, p->r_child);
+}
+
+
+
+Node* Tree::makeTree(int n, int m) { //Create an n-level full binary tree with 
+							  //with random values between 0 ... m-1
+							  //and returns a pointer to the root.
+
+	Node* p = new Node(rand() % m);
+	if (n == 1) return p;
+	p->l_child = makeTree(n - 1, m);
+	p->r_child = makeTree(n - 1, m);
+	return p;
+}
+
+void Tree::printTree1(Node* p) { //in-order printing
+	if (p == nullptr) return;
+	printTree1(p->l_child);
+	cout << p->value << " ";
+	printTree1(p->r_child);
+}
+
+void Tree::printTree2(Node* p) { //pre-order printing
+
+	if (p == nullptr) return;
+	cout << p->value << " ";
+	printTree2(p->l_child);
+	printTree2(p->r_child);
+}
+void Tree::printTree3(Node* p) { //post-order printing
+	if (p == nullptr) return;
+	printTree3(p->l_child);
+	printTree3(p->r_child);
+	cout << p->value << " ";
+}
+
+
+int main() {
+	Tree T1;
+	T1.root = T1.makeTree(4, 20);
+	T1.printTree1(T1.root);
+	cout << endl;
+	T1.printTree2(T1.root);
+	cout << endl;
+	T1.printTree3(T1.root);
+	cout << endl;
+
+	//testing code for mirrorCopy
+	Tree T2;
+	T2.root = T1.mirrorCopy(T1.root);
+	T2.printTree1(T2.root);
+	cout << endl;
+	T2.printTree2(T2.root);
+	cout << endl;
+	T2.printTree3(T2.root);
+	cout << endl;
+
+	
+	T2.minHeap(T2.root);
+	T2.printTree1(T2.root);
+	cout << endl;
+	T2.printTree2(T2.root);
+	cout << endl;
+	T2.printTree3(T2.root);
+	cout << endl;
+	
+
+	
+	Tree T3;
+	T3.root = T3.makeTree(5, 20);
+	T3.sort(T3.root);
+
+	T3.printTree1(T3.root);
+	cout << endl;
+	T3.printTree2(T3.root);
+	cout << endl;
+	T3.printTree3(T3.root);
+	cout << endl;
+	
+
+	return 0;
+}
